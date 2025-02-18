@@ -19,7 +19,7 @@ gcc --version
 # Create an executable
 gcc hello.c -o hello.out
 # Run the executable
-./hello
+./hello.out
 # Compile and execute the output file
 gcc hello.c -o hello.out && ./hello.out
 ```
@@ -45,7 +45,7 @@ Be careful that arguments are always considered `char*`, even if you pass intege
 
 **Compiling multiple files**
 ```bash
-g++ main.cpp hello.cpp factorial.cpp -o hello
+gcc main.c hello.c factorial.c -o hello
 ```
 **What if we only changed one file, do we need to build everything?!**
 
