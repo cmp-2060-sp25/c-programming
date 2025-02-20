@@ -125,8 +125,8 @@ You can also use variables when writing Makefiles. It comes in handy in situatio
 CC=gcc
 # Hey!, I am comment number 2. I want to say that CFLAGS will be the
 # options I'll pass to the compiler.
-# The -Wall flag in gcc (GNU Compiler Collection) stands for "Warn All". It is used to enable a broad range of compiler warnings that help identify potential issues in your C or C++ code.
-
+# -c: Compile source files into object files (.o) without linking
+# -Wall: Enable all warnings
 CFLAGS=-c -Wall
 
 all: hello
@@ -152,38 +152,69 @@ you can just use them with the dereference operator `$(VAR)`.
 With this brief introduction to Makefiles, you can create some very
 sophisticated mechanism for compiling your projects.
 ```make
-# C Compiler
-CC=gcc
 
-# CFLAGS is a commonly used variable in Makefiles to specify flags for the C compiler
+# C Compiler
+CC=gcc 
+
 CFLAGS=-c -Wall
 
-# LDFLAGS is typically used with the linker invocation in Makefile rules
+# LDFLAGS is typically used for linker flags
 LDFLAGS=
 
-# SOURCES is expected to be a list of .c source files, for example:
+# List of C source files
 SOURCES=main.c hello.c factorial.c
 
-# $(SOURCES:.c=.o) is a Makefile substitution reference, it replaces all .c extensions in the SOURCES list with .o.
+# Convert all .c files in SOURCES to .o files using Makefile substitution
+# Example: If SOURCES=main.c hello.c factorial.c, then OBJECTS=main.o hello.o factorial.o
 OBJECTS=$(SOURCES:.c=.o)
-# result OBJECTS = file1.o file2.o file3.o
 
+# The final executable file name
 EXECUTABLE=hello
 
+# 'all' depends on the source files and the final executable
 all: $(SOURCES) $(EXECUTABLE)
-	
+# Maps to: 
+# all: main.c hello.c factorial.c hello
+# If the `hello` file is missing, make searches for a rule that defines how to create this file
+
+# Rule to build the final executable from object files
+# $(EXECUTABLE) depends on all .o files (stored in $(OBJECTS))
+# $@ represents the target (hello)
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+# Maps to:
+# hello: main.o hello.o factorial.o
+#	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+# If it can't find .o files, it will look for a rule to create them
 
-# .c.o is a generic suffix rule in a Makefile that specifies how to compile .c files into .o (object) files.
-# This defines a rule for how to transform a .c file into a .o file.
-# It’s a pattern rule, meaning any .c file can be automatically compiled into an object file (.o) using the specified command.
-# $< Represents the first prerequisite (the .c source file) in the rule.
-# $@ Represents the target (the object file being built).
 
+# Pattern rule to compile .c files into .o files
+# This tells `make` if a .o file is needed but missing, check if a .c file with the same name exists. If it exists, then for any .c file, generate a .o file
 .c.o:
 	$(CC) $(CFLAGS) $< -o $@
+# $< represents the first prerequisite (the .c file, e.g., main.c)
+# $@ represents the target (the .o file, e.g., main.o)
+# If the files exist, `make` checks modification times of each .c and .o files. If any .c file is newer than its corresponding .o file, make recompiles it. 
+# Maps to:
+# gcc -c -Wall main.c -o main.o
+# gcc -c -Wall hello.c -o hello.o
+# gcc -c -Wall factorial.c -o factorial.o
+
+# To clean the build (remove generated files), you can add:
+# Running 'make clean' will remove all .o files and the executable.
+clean:
+	rm -f $(OBJECTS) $(EXECUTABLE)
 ```
+
+**Summary Notes on `make` behavior:**
+
+1. If `hello` (the executable) doesn't exist, `make` looks for a rule to create it.
+2. It sees that `hello` depends on `object` files and ensures they exist.
+3. If an `object` file doesn't exist, make checks for a rule to create it.
+4. The pattern rule `.c.o:` tells make if a `.o` file is needed but missing, check if a `.c` file with the same name exists, if it exists then this rule `.c.o:` tells make how to generate(compile) those `.c` files to `.o` files.
+5. If an `object` file is older than its corresponding `.c` file, it is recompiled.
+6. Finally, the `object` files are linked together to create the executable.
+
 You could adapt it to your own personal projects changing only 2 lines, no
 matter how many additional files you have.
 
